@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:mysql://124.221.14.39:3306/credit_management?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2b8&allowMultiQueries=true
+    username: test
+    password: Test123.
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # HikariCP
+    hikari:
+      minimum-idle: 5 #
+      maximum-pool-size: 10 #
+      idle-timeout: 600000 # [10min]
+      max-lifetime: 1800000 # [30min]
+      connection-timeout: 30000 # 30s
+      connection-test-query: SELECT 1 #
+mybatis:
+  type-aliases-package: coding.creditmanagement.entity
+  mapper-locations: classpath:mapper/*Mapper.xml
+
+
+
+
