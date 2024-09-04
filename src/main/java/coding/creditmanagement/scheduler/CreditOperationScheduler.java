@@ -17,6 +17,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import java.util.UUID;
 import static coding.creditmanagement.consts.CardConstant.TEST_QUERY_CARD_ID;
 
@@ -35,11 +36,11 @@ public class CreditOperationScheduler {
     private static double[] probabilities = {0.0001, 0.3333, 0.3333, 0.3333}; // 0.01%, 33.33%, 33.33%, 33.33%
     //各个
     private  static int[] values = {0, 1, 2, 3}; // 对应的随机数
-    ParameterizedTypeReference<MyResponse<CreditInfoDto>> responseType =
+    private ParameterizedTypeReference<MyResponse<CreditInfoDto>> responseType =
             new ParameterizedTypeReference<>() {
             };
     // 定时任务，每10毫秒调用一次
-    @Scheduled(fixedRate = 10)
+    @Scheduled(fixedRate = 100)
     public void performUserOperations() {
         //随机选择一张信用卡
         String cardId=cardCreditMapper.selectRandomCardId();
@@ -71,6 +72,7 @@ public class CreditOperationScheduler {
             case 1:{
                 //假设减少额度是【0.01，10000）的随机数
                 double randomNumber = 0.01 + (9999.99 * Math.random());
+                randomNumber= Math.round(randomNumber * 100.0) / 100.0;
                 Double oriCredit = cardCreditMapper.selectByPrimaryKey(cardId).getCardCredit();
                 CreditReduceDto creditReduceDto=new CreditReduceDto(cardId,randomNumber);
 //                减少额度
@@ -89,6 +91,8 @@ public class CreditOperationScheduler {
             }
             case 2:{
                 double randomNumber = 0.01 + (9999.99 * Math.random());
+                randomNumber= Math.round(randomNumber * 100.0) / 100.0;
+
                 Double oriCredit = cardCreditMapper.selectByPrimaryKey(cardId).getCardCredit();
 
                 CreditAddDto creditAddDto=new CreditAddDto(cardId,randomNumber);
@@ -109,12 +113,16 @@ public class CreditOperationScheduler {
                 return;
             }
             case 3:{
+                String queryUrl = UriComponentsBuilder.fromUriString(url)
+                        .queryParam("cardId", cardId)
+                        .toUriString();
 //                查询额度
                 MyResponse<CreditInfoDto> response = restTemplate.exchange(
-                        url,
+                        queryUrl,
                         HttpMethod.POST,
-                        new HttpEntity<>(cardId),
+                        null,
                         responseType
+
                 ).getBody();
 
                 if(CardConstant.SUCCESS_CODE.equals(response.getCode())){

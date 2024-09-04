@@ -10,9 +10,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class CreditInfoDto {
+public class CreditInfoDto extends Object{
     private String cardId;
     private Double cardCredit;
+    @Override
+    public String toString(){
+        return String.format("cardId: %s, cardCredit:%.2f",cardId,cardCredit);
+    }
 
 
 }

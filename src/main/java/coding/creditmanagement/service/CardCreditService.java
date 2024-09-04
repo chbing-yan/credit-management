@@ -1,20 +1,22 @@
 package coding.creditmanagement.service;
+
 import coding.creditmanagement.consts.CardConstant;
+import coding.creditmanagement.dto.CreditAddDto;
 import coding.creditmanagement.dto.CreditInfoDto;
 import coding.creditmanagement.dto.CreditInitDto;
 import coding.creditmanagement.dto.CreditReduceDto;
-import coding.creditmanagement.dto.CreditAddDto;
 import coding.creditmanagement.entity.CardCredit;
 import coding.creditmanagement.enums.CardStatus;
 import coding.creditmanagement.mapper.CardCreditMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import java.sql.Date;
-import java.time.LocalDate;
-
+import java.time.Instant;
+import java.util.Date;
+@Slf4j
 @Service
 public class CardCreditService {
     @Autowired
@@ -27,7 +29,8 @@ public class CardCreditService {
      * @return
      */
     public CreditInfoDto initializeCredit(CreditInitDto creditInitDto) {
-        Date current=Date.valueOf(LocalDate.now());
+        log.info(String.format("对卡片%s进行额度初始化",creditInitDto.getCardId()));
+        Date current= Date.from(Instant.now());
         CardCredit cardCredit = new CardCredit();
         cardCredit.setCardId(creditInitDto.getCardId());
         cardCredit.setUserId(creditInitDto.getUserId());
@@ -49,7 +52,7 @@ public class CardCreditService {
      */
     @Transactional
     public CreditInfoDto reduce (CreditReduceDto creditReduceDto) {
-        CardCredit cardCredit = cardCreditMapper.selectByPrimaryKey(creditReduceDto.getCardId());
+        CardCredit cardCredit = cardCreditMapper.selectForUpdate(creditReduceDto.getCardId());
 
         Assert.notNull(cardCredit,"尚未初始化额度");
         //确保卡片状态为active
@@ -59,7 +62,7 @@ public class CardCreditService {
             throw new RuntimeException(String.format("减少的额度大于总额度，当前总额度为%.2f",cardCredit.getCardCredit()));
         }
         cardCredit.setCardCredit(cardCredit.getCardCredit()- creditReduceDto.getAmount());
-        cardCredit.setUpdateTime(Date.valueOf(LocalDate.now()));
+        cardCredit.setUpdateTime(Date.from(Instant.now()));
         cardCreditMapper.updateByPrimaryKey(cardCredit);
         return new CreditInfoDto(cardCredit.getCardId(),
                 cardCredit.getCardCredit());
@@ -74,7 +77,7 @@ public class CardCreditService {
 
     @Transactional
     public CreditInfoDto add(CreditAddDto creditAddDto) {
-        CardCredit cardCredit = cardCreditMapper.selectByPrimaryKey(creditAddDto.getCardId());
+        CardCredit cardCredit = cardCreditMapper.selectForUpdate(creditAddDto.getCardId());
 
         Assert.notNull(cardCredit,"尚未初始化额度");
         //确保卡片状态为active
@@ -88,13 +91,16 @@ public class CardCreditService {
         }
         //更新额度
         cardCredit.setCardCredit(newCredit);
-        cardCredit.setUpdateTime(Date.valueOf(LocalDate.now()));
+        cardCredit.setUpdateTime(Date.from(Instant.now()));
         cardCreditMapper.updateByPrimaryKey(cardCredit);
         return new CreditInfoDto(cardCredit.getCardId(), cardCredit.getCardCredit());
     }
 
     public CreditInfoDto getCardCredit(String cardId) {
         CardCredit cardCredit = cardCreditMapper.selectByPrimaryKey(cardId);
+        if(cardCredit==null){
+            return null;
+        }
         return new CreditInfoDto(cardCredit.getCardId(),
                 cardCredit.getCardCredit());
     }
