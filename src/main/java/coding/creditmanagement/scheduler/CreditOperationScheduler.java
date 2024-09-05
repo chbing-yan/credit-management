@@ -39,7 +39,7 @@ public class CreditOperationScheduler {
     private ParameterizedTypeReference<MyResponse<CreditInfoDto>> responseType =
             new ParameterizedTypeReference<>() {
             };
-    // 定时任务，每10毫秒调用一次
+    // 定时任务，每100毫秒调用一次
     @Scheduled(fixedRate = 100)
     public void performUserOperations() {
         //随机选择一张信用卡

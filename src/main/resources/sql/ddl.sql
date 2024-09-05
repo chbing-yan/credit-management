@@ -1,5 +1,4 @@
 CREATE DATABASE IF NOT EXISTS credit_management;
-
 -- 选择数据库
 USE credit_management;
 -- 创建 额度表
